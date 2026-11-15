@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earthcast</title>
+    <script src="https://unpkg.com"></script>
+    <link href="https://unpkg.com" rel="stylesheet"/>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --surface: #1e1e1e;
+            --border: #2c2c2c;
+            --text-main: #f5f5f5;
+            --text-muted: #a0a0a0;
+            --risk-high: #ff1744;
+            --risk-med: #ff9100;
+            --risk-safe: #00e676;
+            --route-cyan: #00e5ff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
+            height: 100dvh;
+            overflow: hidden;
+        }
+        .screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 68px;
+            display: none;
+            flex-direction: column;
+            padding: 20px 16px;
+            overflow-y: auto;
+            z-index: 1;
+        }
+        .screen.active { display: flex; }
+        #screen-home { justify-content: space-between; }
+        .shield-box {
+            margin: auto 0;
+            text-align: center;
+            background-color: var(--surface);
+            border: 2px solid var(--risk-high);
+            border-radius: 20px;
+            padding: 28px 16px;
+            transition: border-color 0.3s;
+        }
+        .shield-status {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--risk-high);
+            margin: 6px 0 10px 0;
+            transition: color 0.3s;
+        }
+        .metrics-panel {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+        }
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+        .metric-item:last-child { border-bottom: none; }
+        .btn-evac {
+            width: 100%;
+            margin-top: 12px;
+            padding: 15px;
+            background-color: var(--risk-high);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .btn-demo {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--route-cyan);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+        #screen-map { padding: 0; }
+        #map { width: 100%; height: 100%; }
+        .map-banner {
+            position: absolute;
+            top: 14px; left: 14px; right: 14px;
+            background-color: var(--surface);
+            border-left: 4px solid var(--route-cyan);
+            border-radius: 10px;
+            padding: 12px;
+            z-index: 10;
+            font-size: 0.85rem;
+        }
+        .shelter-dot {
+            width: 16px; height: 16px;
+            background-color: var(--risk-safe);
+            border: 2px solid white;
+            border-radius: 50%;
+            animation: blink 1.2s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.6; }
+        }
+        .edu-card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .edu-card h3 { font-size: 1rem; margin-bottom: 6px; color: var(--route-cyan); }
+        .edu-card p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.4; }
+        .nav-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: 68px;
+            background-color: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 999;
+        }
+        .nav-bar button {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 12px 20px;
+        }
+        .nav-bar button.active { color: var(--risk-high); }
+    </style>
+</head>
+<body>
+    <!-- PANTALLA 1: ESCUDO DE ESTADO -->
+    <section id="screen-home" class="screen active">
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted);">
+            <span>EARTHCAST QUITO</span>
+            <button type="button" class="btn-demo" onclick="simularCambioDelta()">↻ SIMULAR DELTA</button>
+        </div>
+
+        <div class="shield-box" id="ui-box">
+            <div style="font-size:0.85rem; color:var(--text-muted);">ESTADO DE TU ZONA</div>
+            <div class="shield-status" id="ui-status">CRÍTICO</div>
+            <p style="font-size:0.85rem; color:var(--text-muted);" id="ui-desc">SATURACIÓN HÍDRICA SOBRE FALLA ACTIVA</p>
+        </div>
+
+        <div>
+            <div class="metrics-panel">
+                <div class="metric-item">
+                    <span>HUMEDAD DEL SUELO (NASA/METEORED):</span>
+                    <strong id="ui-humedad" style="color:var(--risk-high);">92%</strong>
+                </div>
+                <div class="metric-item">
+                    <span>ACTIVIDAD DE FALLAS (IG-EPN):</span>
+                    <strong id="ui-sismos" style="color:var(--risk-med);">ENJAMBRE MICRO</strong>
+                </div>
+                <div class="metric-item">
+                    <span>DISTANCIA AL REFUGIO:</span>
+                    <strong style="color:var(--risk-safe);">350m</strong>
+                </div>
+            </div>
+            <button type="button" class="btn-evac" onclick="verPantalla('map')">VER RUTA DE EVACUACIÓN</button>
+        </div>
+    </section>
+
+    <!-- PANTALLA 2: MAPA -->
+    <section id="screen-map" class="screen">
+        <div class="map-banner">
+            <strong style="color:var(--route-cyan);">RUTA OFFLINE ACTIVA (350m)</strong><br>
+            <span>SIGUE LA LÍNEA BRILLANTE HASTA UN REFUGIO SEGURO</span>
+        </div>
+        <div id="map"></div>
+    </section>
+
+    <!-- PANTALLA 3: FICHA EDUCATIVA -->
+    <section id="screen-edu" class="screen">
+        <h2 style="margin-bottom:14px; font-size:1.3rem;">¿Cómo activa el agua una falla?</h2>
+        <div class="edu-card" style="text-align:center;">
+            <svg viewBox="0 0 300 130" width="100%" height="auto">
+                <rect x="10" y="55" width="280" height="65" rx="6" fill="#25252b"/>
+                <line x1="140" y1="55" x2="105" y2="120" stroke="#00e5ff" stroke-width="4"/>
+                <line x1="140" y1="55" x2="105" y2="120" stroke="#ff1744" stroke-width="1.5" stroke-dasharray="4,4"/>
+                <text x="20" y="35" fill="#00e5ff" font-size="11" font-weight="bold">1. LLUVIA (EL NIÑO) INFILTRADA</text>
+                <text x="155" y="90" fill="#ff1744" font-size="11" font-weight="bold">2. FALLA LUBRICADA</text>
+                <text x="155" y="105" fill="#a0a0a0" font-size="9">MENOR FRICCIÓN = MICROSISMOS</text>
+            </svg>
+        </div>
+        <div class="edu-card">
+            <h3>1. INFILTRACIÓN DE SEMANAS ATRÁS</h3>
+            <p>Las lluvias intensas saturan el suelo al 92% y el agua baja lentamente hasta las grietas profundas de la roca.</p>
+        </div>
+        <div class="edu-card">
+            <h3>2. LUBRICACIÓN DE LA FALLA</h3>
+            <p>Esa presión de agua reduce la fricción entre bloques de tierra, provocando enjambres microsísmicos detectados por el IG-EPN.</p>
+        </div>
+    </section>
+
+    <!-- BARRA DE NAVEGACIÓN -->
+    <nav class="nav-bar">
+        <button type="button" id="btn-home" class="active" onclick="verPantalla('home')">ESCUDO</button>
+        <button type="button" id="btn-map" onclick="verPantalla('map')">MAPA</button>
+        <button type="button" id="btn-edu" onclick="verPantalla('edu')">¿POR QUÉ?</button>
+    </nav>
+
+    <script>
+        let mapaCargado = false;
+        let map = null;
+        let estadoSimulado = true;
+
+        // 1. NAVEGACIÓN ENTRE PANTALLAS
+        function verPantalla(nombre) {
+            document.querySelectorAll('.screen').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-bar button').forEach(b => b.classList.remove('active'));
+
+            document.getElementById('screen-' + nombre).classList.add('active');
+            document.getElementById('btn-' + nombre).classList.add('active');
+
+            if (nombre === 'map' && !mapaCargado) {
+                iniciarMapa();
+                mapaCargado = true;
+            } else if (nombre === 'map' && map) {
+                map.resize();
+            }
+        }
+
+        // 2. INICIALIZACIÓN DEL MAPA
+        function iniciarMapa() {
+            const usuario = [-78.5025, -0.2145];
+            const refugio = [-78.4995, -0.2115];
+
+            map = new maplibregl.Map({
+                container: "map",
+                style: "https://cartocdn.com",
+                center: [-78.5010, -0.2130],
+                zoom: 16
+            });
+
+            map.on('load', () => {
+                map.addSource('ruta', {
+                    type: 'geojson',
+                    data: {
+                        type: 'Feature',
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: [usuario, [-78.5012, -0.2128], refugio]
+                            }
+                        }
+                    });
+                    map.addLayer({
+                        id: 'ruta-linea',
+                        type: 'line',
+                        source: 'ruta',
+                        paint: { 'line-color': '#00e5ff', 'line-width': 5 }
+                        });
+                        const el = document.createElement('div');
+                        el.className = 'shelter-dot';
+                        new maplibregl.Marker({ element: el }).setLngLat(refugio).addTo(map);
+                        new maplibregl.Marker({ color: '#ff1744' }).setLngLat(usuario).addTo(map);
+                });
+                    }
+                    async function cargarDatosDesdeJava() {
+                try {
+                    const res = await fetch('delta.json');
+                    const datos = await res.json();
+                    if (datos.h && datos.h["170150"]) {
+                        aplicarValoresUI(datos.h["170150"], datos.s ? datos.s.length : 1);
+                        }
+                        } catch (e) {
+                            console.log("Usando datos locales por defecto (sin servidor activo).");
+                            }
+                }
+                function aplicarValoresUI(humedad, sismos) {
+                    const elHumedad = document.getElementById('ui-humedad');
+                    const elStatus = document.getElementById('ui-status');
+                    const elBox = document.getElementById('ui-box');
+                    const elSismos = document.getElementById('ui-sismos');
+                    elHumedad.textContent = humedad + "%";
+                    elSismos.textContent = sismos > 0 ? ENJAMBRE (`${sismos}`) : "CALMA SÍSMICA";
+
+                    if (humedad >= 85) {
+                        elStatus.textContent = "CRÍTICO";
+                        elStatus.style.color = "var(--risk-high)";
+                        elBox.style.borderColor = "var(--risk-high)";
+                        elHumedad.style.color = "var(--risk-high)";
+                        } else if (humedad >= 70) {
+                            elStatus.textContent = "PRECAUCIÓN";
+                            elStatus.style.color = "var(--risk-med)";
+                            elBox.style.borderColor = "var(--risk-med)";
+                            elHumedad.style.color = "var(--risk-med)";
+                            } else {
+                                elStatus.textContent = "ESTABLE";
+                                elStatus.style.color = "var(--risk-safe)";
+                                elBox.style.borderColor = "var(--risk-safe)";
+                                elHumedad.style.color = "var(--risk-safe)";
+                                }
+                }
+                function simularCambioDelta() {
+                    estadoSimulado = !estadoSimulado;
+                    if (estadoSimulado) {
+                        aplicarValoresUI(92, 2);
+                        } else {
+                            aplicarValoresUI(64, 0);
+                            }
+                }
+                cargarDatosDesdeJava();
