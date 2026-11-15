@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#121212" />
+    <meta name="description" content="EARTHCAST Quito: sitio informativo con cartografía, puntos de encuentro, rutas de referencia e información educativa sobre riesgos geológicos." />
     <link rel="manifest" href="./manifest.json" />
     <link rel="stylesheet" href="./vendor/leaflet/leaflet.css" />
     <title>Earthcast</title>
@@ -51,7 +52,7 @@
         margin: auto 0;
         text-align: center;
         background-color: var(--surface);
-        border: 2px solid var(--risk-high);
+        border: 2px solid var(--border);
         border-radius: 20px;
         padding: 28px 16px;
         transition: border-color 0.3s ease;
@@ -60,7 +61,7 @@
       .shield-status {
         font-size: 2.5rem;
         font-weight: 900;
-        color: var(--risk-high);
+        color: var(--text-muted);
         margin: 6px 0 10px;
         transition: color 0.3s ease;
       }
@@ -83,8 +84,7 @@
 
       .metric-item:last-child { border-bottom: none; }
 
-      .btn-evac,
-      .btn-demo {
+      .btn-evac {
         cursor: pointer;
       }
 
@@ -98,15 +98,6 @@
         border-radius: 12px;
         font-weight: 800;
         font-size: 1rem;
-      }
-
-      .btn-demo {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        color: var(--route-cyan);
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-size: 0.7rem;
       }
 
       #screen-map,
@@ -391,30 +382,36 @@
           <span>EARTHCAST QUITO</span>
           <span class="connection-state" data-connection-state role="status" aria-live="polite"></span>
         </div>
-        <button type="button" class="btn-demo" onclick="simularCambioDelta()">↻ SIMULAR DELTA</button>
       </div>
 
+      <p style="color:var(--text-muted); line-height:1.5;">
+        Sitio informativo con mapas, cartografía y recursos para conocer los puntos de encuentro de Quito.
+      </p>
+
       <div class="shield-box" id="ui-box">
-        <div style="font-size:0.85rem; color:var(--text-muted);">ESTADO DE TU ZONA</div>
-        <div class="shield-status" id="ui-status">CRÍTICO</div>
-        <p style="font-size:0.85rem; color:var(--text-muted);" id="ui-desc">SATURACIÓN HÍDRICA SOBRE FALLA ACTIVA</p>
+        <div style="font-size:0.85rem; color:var(--text-muted);">INDICADORES INFORMATIVOS</div>
+        <div class="shield-status" id="ui-status">CARGANDO</div>
+        <p style="font-size:0.85rem; color:var(--text-muted);" id="ui-desc">Consultando los datos disponibles en el proyecto.</p>
       </div>
 
       <div>
         <div class="metrics-panel">
           <div class="metric-item">
             <span>HUMEDAD DEL SUELO (NASA/METEORED):</span>
-            <strong id="ui-humedad" style="color:var(--risk-high);">92%</strong>
+            <strong id="ui-humedad">No disponible</strong>
           </div>
           <div class="metric-item">
             <span>ACTIVIDAD DE FALLAS (IG-EPN):</span>
-            <strong id="ui-sismos" style="color:var(--risk-med);">ENJAMBRE MICRO</strong>
+            <strong id="ui-sismos">No disponible</strong>
           </div>
           <div class="metric-item">
             <span>DISTANCIA AL REFUGIO:</span>
-            <strong style="color:var(--risk-safe);">350m</strong>
+            <strong>Consulta el mapa</strong>
           </div>
         </div>
+        <p style="margin-top:10px; color:var(--text-muted); font-size:0.8rem; line-height:1.5;">
+          Los indicadores se leen de un archivo local y podrían no estar actualizados. Este sitio no es un sistema oficial de alertas; sigue las indicaciones de las autoridades.
+        </p>
         <button type="button" class="btn-evac" onclick="verPantalla('map')">VER RUTA DE EVACUACIÓN</button>
       </div>
     </section>
@@ -506,14 +503,14 @@
 
     <section id="screen-level" class="screen">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h2 style="font-size:1.25rem;">Diagnóstico del nivel de riesgo</h2>
-        <span id="level-badge" class="level-badge" style="background: rgba(255, 23, 68, 0.15); color: #ff1744;">CRÍTICO</span>
+        <h2 style="font-size:1.25rem;">Indicadores y niveles orientativos</h2>
+        <span id="level-badge" class="level-badge" style="background: rgba(160, 160, 160, 0.15); color: var(--text-muted);">SIN DATOS</span>
       </div>
 
       <div class="level-shell">
         <article class="level-card">
           <h3>¿Qué está pasando?</h3>
-          <p id="level-detail">El suelo está muy saturado y la falla activa se está lubricando con agua. Cuando el agua alcanza la zona de roce entre bloques geológicos, la fricción cae y aparecen microtemblores.</p>
+          <p id="level-detail">Los indicadores aparecerán cuando haya datos disponibles en el archivo local del proyecto.</p>
         </article>
 
         <article class="level-card">
@@ -528,7 +525,7 @@
 
         <article class="level-card">
           <h3>Indicadores del sistema</h3>
-          <p id="level-indicators">Humedad del suelo 92%, enjambre microsísmico detectado, distancia a refugio 350 m y trayecto de evacuación activo.</p>
+          <p id="level-indicators">No hay indicadores cargados. Consulta la cartografía y las fuentes oficiales para obtener información actualizada.</p>
         </article>
       </div>
     </section>
@@ -547,16 +544,16 @@
       </div>
       <div class="edu-card">
         <h3>1. INFILTRACIÓN DE SEMANAS ATRÁS</h3>
-        <p>Las lluvias intensas saturan el suelo al 92% y el agua baja lentamente hasta las grietas profundas de la roca.</p>
+        <p>Las lluvias intensas pueden infiltrar el suelo y el agua puede desplazarse por grietas de la roca.</p>
       </div>
       <div class="edu-card">
         <h3>2. LUBRICACIÓN DE LA FALLA</h3>
-        <p>Esa presión de agua reduce la fricción entre bloques de tierra, provocando enjambres microsísmicos detectados por el IG-EPN.</p>
+        <p>El aumento de presión de agua puede reducir la fricción entre bloques. La actividad sísmica debe consultarse en fuentes oficiales.</p>
       </div>
     </section>
 
     <nav class="nav-bar">
-      <button type="button" id="btn-home" class="active" onclick="verPantalla('home')">ESCUDO</button>
+      <button type="button" id="btn-home" class="active" onclick="verPantalla('home')">INICIO</button>
       <button type="button" id="btn-map" onclick="verPantalla('map')">MAPA</button>
       <button type="button" id="btn-cartografia" onclick="verPantalla('cartografia')">CARTOGRAFÍA</button>
       <button type="button" id="btn-sismos" onclick="verPantalla('sismos')">SISMOS</button>
@@ -566,7 +563,6 @@
 
     <script src="./vendor/leaflet/leaflet.js"></script>
     <script>
-      let estadoSimulado = true;
       let mapEvac = null;
       let mapSismos = null;
       let mapCartografia = null;
@@ -1380,25 +1376,36 @@
         actualizarDescripcionNivel(humedad, sismos);
       }
 
-      function simularCambioDelta() {
-        estadoSimulado = !estadoSimulado;
-        aplicarValoresUI(estadoSimulado ? 92 : 64, estadoSimulado ? 2 : 0);
+      function mostrarDatosNoDisponibles() {
+        document.getElementById('ui-status').textContent = 'SIN DATOS';
+        document.getElementById('ui-desc').textContent = 'No se pudieron cargar los indicadores del proyecto.';
+        document.getElementById('ui-humedad').textContent = 'No disponible';
+        document.getElementById('ui-sismos').textContent = 'No disponible';
+        document.getElementById('ui-box').style.borderColor = 'var(--border)';
+        document.getElementById('ui-status').style.color = 'var(--text-muted)';
+        document.getElementById('level-badge').textContent = 'SIN DATOS';
+        document.getElementById('level-badge').style.background = 'rgba(160, 160, 160, 0.15)';
+        document.getElementById('level-badge').style.color = 'var(--text-muted)';
+        document.getElementById('level-detail').textContent = 'No se pudieron cargar los indicadores. Consulta las fuentes oficiales para obtener información actualizada.';
+        document.getElementById('level-indicators').textContent = 'No hay indicadores cargados.';
       }
 
-      async function cargarDatosDesdeJava() {
+      async function cargarIndicadores() {
         try {
           const response = await fetch('delta.json');
           if (!response.ok) throw new Error('delta.json no disponible');
           const datos = await response.json();
-
-          if (datos.h && datos.h['170150']) {
-            const humedad = Number(datos.h['170150']);
-            const sismos = Array.isArray(datos.s) ? datos.s.length : 1;
-            aplicarValoresUI(humedad, sismos);
+          const humedad = Number(datos.h?.['170150']);
+          if (!Number.isFinite(humedad) || humedad < 0 || humedad > 100) {
+            throw new Error('El valor de humedad en delta.json no es válido.');
           }
+          if (!Array.isArray(datos.s)) {
+            throw new Error('La actividad sísmica en delta.json no tiene un formato válido.');
+          }
+          aplicarValoresUI(humedad, datos.s.length);
         } catch (error) {
-          console.log('Usando datos locales por defecto (sin servidor activo).');
-          aplicarValoresUI(92, 2);
+          console.error('No fue posible cargar los indicadores informativos:', error);
+          mostrarDatosNoDisponibles();
         }
       }
 
@@ -1424,7 +1431,7 @@
         console.error('No fue posible cargar los puntos referenciales:', error);
         document.getElementById('nearest-point-status').textContent = error.message;
       });
-      cargarDatosDesdeJava();
+      cargarIndicadores();
       const initialScreen = new URLSearchParams(window.location.search).get('screen');
       if (initialScreen === 'map' || initialScreen === 'cartografia') {
         verPantalla(initialScreen);
