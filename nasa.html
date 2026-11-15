@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#121212">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,6 +21,13 @@
             --route-cyan: #00e5ff;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        <script>
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./service-worker.js")
+        .then(() => console.log("EARTHCAST OFFLINE ACTIVADO"))
+        .catch(error => console.error(error));
+}
+</script>
         body {
             background-color: var(--bg-dark);
             color: var(--text-main);
