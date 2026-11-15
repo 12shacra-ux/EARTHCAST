@@ -1,12 +1,1 @@
-// Relieve de la NASA sutil (no tapa las rutas ni las fallas)
-fetch('curvas_nasa.geojson')
-  .then(res => res.json())
-  .then(data => {
-    L.geoJSON(data, {
-      style: {
-        color: '#94a3b8', // Gris azulado suave
-        weight: 0.8,      // Línea muy fina
-        opacity: 0.45     // Semitransparente
-      }
-    }).addTo(map);
-  });
+
