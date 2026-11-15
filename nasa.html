@@ -288,8 +288,9 @@
                     const elBox = document.getElementById('ui-box');
                     const elSismos = document.getElementById('ui-sismos');
                     elHumedad.textContent = humedad + "%";
-                    elSismos.textContent = sismos > 0 ? ENJAMBRE (`${sismos}`) : "CALMA SÍSMICA";
-
+                    elSismos.textContent = sismos > 0
+    ? `ENJAMBRE (${sismos})`
+    : "CALMA SÍSMICA";
                     if (humedad >= 85) {
                         elStatus.textContent = "CRÍTICO";
                         elStatus.style.color = "var(--risk-high)";
