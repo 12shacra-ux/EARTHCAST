@@ -154,6 +154,33 @@
         padding-left: 18px;
       }
 
+      .delta-simulator {
+        margin-top: 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px;
+      }
+
+      .delta-simulator p {
+        margin-top: 8px;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        line-height: 1.5;
+      }
+
+      .delta-simulator button {
+        margin: 12px 8px 0 0;
+        padding: 10px 12px;
+        background: var(--surface);
+        border: 1px solid var(--route-cyan);
+        border-radius: 8px;
+        color: var(--route-cyan);
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.85rem;
+      }
+
       .map-svg {
         display: block;
         width: 100%;
@@ -412,6 +439,13 @@
         <p style="margin-top:10px; color:var(--text-muted); font-size:0.8rem; line-height:1.5;">
           Los indicadores se leen de un archivo local y podrían no estar actualizados. Este sitio no es un sistema oficial de alertas; sigue las indicaciones de las autoridades.
         </p>
+        <section class="delta-simulator" aria-labelledby="delta-simulator-title">
+          <h2 id="delta-simulator-title" style="font-size:1rem;">Simulador Delta</h2>
+          <p>Prueba escenarios de humedad y actividad sísmica. Son valores demostrativos, no mediciones reales ni alertas oficiales.</p>
+          <button type="button" id="delta-simulate-button" onclick="simularCambioDelta()">Iniciar simulación</button>
+          <button type="button" id="delta-reset-button" onclick="restablecerIndicadores()" hidden>Volver a indicadores del archivo</button>
+          <p id="delta-simulator-status" role="status" aria-live="polite">Los indicadores mostrados provienen del archivo local del proyecto.</p>
+        </section>
         <button type="button" class="btn-evac" onclick="verPantalla('map')">VER RUTA DE EVACUACIÓN</button>
       </div>
     </section>
@@ -566,6 +600,8 @@
       let mapEvac = null;
       let mapSismos = null;
       let mapCartografia = null;
+      let simulacionDeltaActiva = false;
+      let escenarioDelta = 0;
       let evacOrigin = null;
       let evacDestination = null;
       let evacDestinationLabel = 'Destino elegido';
@@ -1388,6 +1424,29 @@
         document.getElementById('level-badge').style.color = 'var(--text-muted)';
         document.getElementById('level-detail').textContent = 'No se pudieron cargar los indicadores. Consulta las fuentes oficiales para obtener información actualizada.';
         document.getElementById('level-indicators').textContent = 'No hay indicadores cargados.';
+        document.getElementById('delta-simulator-status').textContent = 'No se pudieron cargar los indicadores locales.';
+      }
+
+      function simularCambioDelta() {
+        simulacionDeltaActiva = true;
+        const humedad = escenarioDelta === 0 ? 92 : 64;
+        const sismos = escenarioDelta === 0 ? 2 : 0;
+        aplicarValoresUI(humedad, sismos);
+        document.getElementById('delta-simulator-status').textContent =
+          `Simulación activa: escenario ${escenarioDelta === 0 ? 'crítico' : 'estable'} de prueba. Estos valores no son datos reales.`;
+        document.getElementById('delta-simulate-button').textContent = 'Cambiar escenario';
+        document.getElementById('delta-reset-button').hidden = false;
+        escenarioDelta = 1 - escenarioDelta;
+      }
+
+      async function restablecerIndicadores() {
+        simulacionDeltaActiva = false;
+        escenarioDelta = 0;
+        document.getElementById('delta-simulate-button').textContent = 'Iniciar simulación';
+        document.getElementById('delta-reset-button').hidden = true;
+        document.getElementById('delta-simulator-status').textContent =
+          'Cargando los indicadores del archivo local; no son datos en tiempo real.';
+        await cargarIndicadores();
       }
 
       async function cargarIndicadores() {
@@ -1402,8 +1461,12 @@
           if (!Array.isArray(datos.s)) {
             throw new Error('La actividad sísmica en delta.json no tiene un formato válido.');
           }
+          if (simulacionDeltaActiva) return;
           aplicarValoresUI(humedad, datos.s.length);
+          document.getElementById('delta-simulator-status').textContent =
+            'Indicadores del archivo local cargados; no son datos en tiempo real.';
         } catch (error) {
+          if (simulacionDeltaActiva) return;
           console.error('No fue posible cargar los indicadores informativos:', error);
           mostrarDatosNoDisponibles();
         }
