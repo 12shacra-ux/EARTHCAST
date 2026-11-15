@@ -1,0 +1,128 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "source": "OpenStreetMap, Esri World Geocoding Service, and user-provided point names",
+    "license": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors; Esri",
+    "note": "Los puntos de encuentro/refugio fueron confirmados por el usuario. Las coordenadas de UTAQ, Solanda S4 y Solanda S2 son aproximadas."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Plaza Quitumbe",
+        "confirmed_shelter": true,
+        "coordinates_approximate": true,
+        "source": "OpenStreetMap"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-78.5470721, -0.2945206]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Parque Las Cuadras",
+        "confirmed_shelter": true,
+        "coordinates_approximate": true,
+        "source": "OpenStreetMap"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-78.5478675, -0.2871096]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Parque Nueva Aurora",
+        "confirmed_shelter": true,
+        "coordinates_approximate": true,
+        "source": "OpenStreetMap"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-78.551894, -0.3198019]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Parque Metropolitano del Sur",
+        "confirmed_shelter": true,
+        "coordinates_approximate": true,
+        "source": "OpenStreetMap"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-78.5164802, -0.3401968]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Parque Lineal Solanda / Parque Solanda S2",
+        "confirmed_shelter": true,
+        "coordinates_approximate": true,
+        "source": "OpenStreetMap"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-78.540621, -0.2643369]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Parque UTAQ",
+        "confirmed_shelter": true,
+        "coordinates_approximate": true,
+        "source": "Estimación de calle Leonidas Dubles con geocodificación de Esri; ubicación no verificada"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-78.5430467, -0.3231158]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Parque Ecológico Solanda",
+        "confirmed_shelter": true,
+        "coordinates_approximate": true,
+        "source": "OpenStreetMap; coincidencia aproximada con Parque Ecológico María Augusta Urrutia"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-78.5386469, -0.2695672]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Parque Solanda S4",
+        "confirmed_shelter": true,
+        "coordinates_approximate": true,
+        "source": "Estimación entre las calles Manuel Monteros y José Pontón; ubicación no verificada"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-78.5447969, -0.2745745]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Liga Barrial Solanda",
+        "confirmed_shelter": true,
+        "coordinates_approximate": true,
+        "source": "OpenStreetMap; cancha cartografiada"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-78.5370931, -0.266959]
+      }
+    }
+  ]
+}

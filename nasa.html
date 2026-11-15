@@ -1,328 +1,1434 @@
 <!DOCTYPE html>
 <html lang="es">
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#121212">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#121212" />
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="stylesheet" href="./vendor/leaflet/leaflet.css" />
     <title>Earthcast</title>
-    <script src="https://unpkg.com"></script>
-    <link href="https://unpkg.com" rel="stylesheet"/>
     <style>
-        :root {
-            --bg-dark: #121212;
-            --surface: #1e1e1e;
-            --border: #2c2c2c;
-            --text-main: #f5f5f5;
-            --text-muted: #a0a0a0;
-            --risk-high: #ff1744;
-            --risk-med: #ff9100;
-            --risk-safe: #00e676;
-            --route-cyan: #00e5ff;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        <script>
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./service-worker.js")
-        .then(() => console.log("EARTHCAST OFFLINE ACTIVADO"))
-        .catch(error => console.error(error));
-}
-</script>
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: system-ui, -apple-system, sans-serif;
-            height: 100dvh;
-            overflow: hidden;
-        }
-        .screen {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 68px;
-            display: none;
-            flex-direction: column;
-            padding: 20px 16px;
-            overflow-y: auto;
-            z-index: 1;
-        }
-        .screen.active { display: flex; }
-        #screen-home { justify-content: space-between; }
-        .shield-box {
-            margin: auto 0;
-            text-align: center;
-            background-color: var(--surface);
-            border: 2px solid var(--risk-high);
-            border-radius: 20px;
-            padding: 28px 16px;
-            transition: border-color 0.3s;
-        }
-        .shield-status {
-            font-size: 2.5rem;
-            font-weight: 900;
-            color: var(--risk-high);
-            margin: 6px 0 10px 0;
-            transition: color 0.3s;
-        }
-        .metrics-panel {
-            background-color: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px;
-        }
-        .metric-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.9rem;
-        }
-        .metric-item:last-child { border-bottom: none; }
-        .btn-evac {
-            width: 100%;
-            margin-top: 12px;
-            padding: 15px;
-            background-color: var(--risk-high);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-weight: 800;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-        .btn-demo {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--route-cyan);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.7rem;
-            cursor: pointer;
-        }
-        #screen-map { padding: 0; }
-        #map { width: 100%; height: 100%; }
-        .map-banner {
-            position: absolute;
-            top: 14px; left: 14px; right: 14px;
-            background-color: var(--surface);
-            border-left: 4px solid var(--route-cyan);
-            border-radius: 10px;
-            padding: 12px;
-            z-index: 10;
-            font-size: 0.85rem;
-        }
-        .shelter-dot {
-            width: 16px; height: 16px;
-            background-color: var(--risk-safe);
-            border: 2px solid white;
-            border-radius: 50%;
-            animation: blink 1.2s infinite;
-        }
-        @keyframes blink {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0.6; }
-        }
-        .edu-card {
-            background-color: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-        }
-        .edu-card h3 { font-size: 1rem; margin-bottom: 6px; color: var(--route-cyan); }
-        .edu-card p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.4; }
-        .nav-bar {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            height: 68px;
-            background-color: var(--surface);
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            z-index: 999;
-        }
-        .nav-bar button {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-weight: 700;
-            font-size: 0.85rem;
-            cursor: pointer;
-            padding: 12px 20px;
-        }
-        .nav-bar button.active { color: var(--risk-high); }
+      :root {
+        --bg-dark: #121212;
+        --surface: #1e1e1e;
+        --border: #2c2c2c;
+        --text-main: #f5f5f5;
+        --text-muted: #a0a0a0;
+        --risk-high: #ff1744;
+        --risk-med: #ff9100;
+        --risk-safe: #00e676;
+        --route-cyan: #00e5ff;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      [hidden] { display: none !important; }
+
+      html, body {
+        height: 100%;
+      }
+
+      body {
+        background-color: var(--bg-dark);
+        color: var(--text-main);
+        font-family: system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+      }
+
+      .screen {
+        position: absolute;
+        inset: 0 0 68px 0;
+        display: none;
+        flex-direction: column;
+        padding: 20px 16px;
+        overflow-y: auto;
+        z-index: 1;
+      }
+
+      .screen.active { display: flex; }
+      #screen-home { justify-content: space-between; }
+
+      .shield-box {
+        margin: auto 0;
+        text-align: center;
+        background-color: var(--surface);
+        border: 2px solid var(--risk-high);
+        border-radius: 20px;
+        padding: 28px 16px;
+        transition: border-color 0.3s ease;
+      }
+
+      .shield-status {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: var(--risk-high);
+        margin: 6px 0 10px;
+        transition: color 0.3s ease;
+      }
+
+      .metrics-panel {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px;
+      }
+
+      .metric-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.9rem;
+      }
+
+      .metric-item:last-child { border-bottom: none; }
+
+      .btn-evac,
+      .btn-demo {
+        cursor: pointer;
+      }
+
+      .btn-evac {
+        width: 100%;
+        margin-top: 12px;
+        padding: 15px;
+        background-color: var(--risk-high);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 1rem;
+      }
+
+      .btn-demo {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--route-cyan);
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+      }
+
+      #screen-map,
+      #screen-sismos,
+      #screen-level,
+      #screen-cartografia { padding: 0; }
+
+      .map-shell,
+      .leaflet-map {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+      }
+
+      .level-shell {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
+        padding: 12px 0 20px;
+      }
+
+      .level-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+      }
+
+      .level-badge {
+        display: inline-block;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        border-radius: 999px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+
+      .level-card h3 {
+        margin: 12px 0 8px;
+        font-size: 1.1rem;
+      }
+
+      .level-card p,
+      .level-card li {
+        color: var(--text-muted);
+        line-height: 1.5;
+        font-size: 0.88rem;
+      }
+
+      .level-card ul {
+        margin-top: 8px;
+        padding-left: 18px;
+      }
+
+      .map-svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .connection-state {
+        display: block;
+        margin-top: 4px;
+        color: var(--text-muted);
+        font-size: 0.72rem;
+      }
+
+      .offline-map {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        overflow: auto;
+        padding: 18px 12px 110px;
+        background: #e7eee8;
+        color: #17231b;
+      }
+
+      .offline-map[hidden] { display: none; }
+
+      .offline-map h3 {
+        margin-bottom: 6px;
+        font-size: 0.95rem;
+      }
+
+      .offline-map p {
+        margin-bottom: 8px;
+        font-size: 0.76rem;
+        line-height: 1.4;
+      }
+
+      .offline-map svg {
+        display: block;
+        width: 100%;
+        height: min(52vh, 380px);
+        min-height: 250px;
+        border: 1px solid #c5d0c7;
+        border-radius: 10px;
+        background: #f3f5ef;
+      }
+
+      .offline-map-list {
+        margin-top: 8px;
+        padding-left: 20px;
+        font-size: 0.75rem;
+        line-height: 1.5;
+      }
+
+      .nearest-point-status {
+        margin-top: 7px;
+        padding: 8px;
+        border-left: 3px solid var(--risk-safe);
+        background: rgba(0, 230, 118, 0.08);
+      }
+
+      .leaflet-control-container .leaflet-top,
+      .leaflet-control-container .leaflet-bottom {
+        z-index: 500;
+      }
+
+      .route-panel {
+        position: absolute;
+        top: 72px;
+        left: 12px;
+        right: 12px;
+        z-index: 600;
+        padding: 12px;
+        border-radius: 12px;
+        background: rgba(30, 30, 30, 0.96);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+      }
+
+      .route-panel button,
+      .route-panel a,
+      .route-panel select {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 9px 11px;
+        border: 0;
+        border-radius: 8px;
+        background: #00b8d4;
+        color: #061318;
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .route-panel select {
+        width: 100%;
+        background: #252525;
+        color: var(--text-main);
+        border: 1px solid var(--border);
+      }
+
+      .route-panel > summary {
+        padding: 2px 0 8px;
+        color: var(--route-cyan);
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .map-layer-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 9px;
+        color: var(--text-main);
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+
+      .map-layer-toggle input {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--route-cyan);
+      }
+
+      .route-panel p {
+        margin-top: 7px;
+        color: var(--text-muted);
+        font-size: 0.78rem;
+        line-height: 1.4;
+      }
+
+      #route-steps {
+        max-height: 115px;
+        overflow-y: auto;
+        margin: 8px 0 0;
+        padding-left: 20px;
+        font-size: 0.8rem;
+        line-height: 1.45;
+      }
+
+      #route-steps:empty { display: none; }
+
+      .map-banner {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        right: 14px;
+        background-color: rgba(30, 30, 30, 0.96);
+        border-left: 4px solid var(--route-cyan);
+        border-radius: 10px;
+        padding: 12px;
+        z-index: 10;
+        font-size: 0.85rem;
+      }
+
+      .shelter-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--risk-safe);
+        border: 2px solid white;
+        box-shadow: 0 0 0 4px rgba(0, 230, 118, 0.2);
+        animation: blink 1.2s infinite;
+      }
+
+      @keyframes blink {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.4); opacity: 0.7; }
+      }
+
+      .edu-card {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+
+      .edu-card h3 {
+        font-size: 1rem;
+        margin-bottom: 6px;
+        color: var(--route-cyan);
+      }
+
+      .edu-card p {
+        font-size: 0.88rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+      }
+
+      .nav-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 68px;
+        background-color: var(--surface);
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        overflow-x: auto;
+        z-index: 999;
+      }
+
+      .nav-bar button {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-weight: 700;
+        font-size: 0.72rem;
+        cursor: pointer;
+        padding: 12px 8px;
+        flex: 0 0 auto;
+        white-space: nowrap;
+      }
+
+      .nav-bar button.active { color: var(--risk-high); }
     </style>
-</head>
-<body>
-    <!-- PANTALLA 1: ESCUDO DE ESTADO -->
+  </head>
+  <body>
     <section id="screen-home" class="screen active">
-        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted);">
-            <span>EARTHCAST QUITO</span>
-            <button type="button" class="btn-demo" onclick="simularCambioDelta()">↻ SIMULAR DELTA</button>
-        </div>
-
-        <div class="shield-box" id="ui-box">
-            <div style="font-size:0.85rem; color:var(--text-muted);">ESTADO DE TU ZONA</div>
-            <div class="shield-status" id="ui-status">CRÍTICO</div>
-            <p style="font-size:0.85rem; color:var(--text-muted);" id="ui-desc">SATURACIÓN HÍDRICA SOBRE FALLA ACTIVA</p>
-        </div>
-
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-muted);">
         <div>
-            <div class="metrics-panel">
-                <div class="metric-item">
-                    <span>HUMEDAD DEL SUELO (NASA/METEORED):</span>
-                    <strong id="ui-humedad" style="color:var(--risk-high);">92%</strong>
-                </div>
-                <div class="metric-item">
-                    <span>ACTIVIDAD DE FALLAS (IG-EPN):</span>
-                    <strong id="ui-sismos" style="color:var(--risk-med);">ENJAMBRE MICRO</strong>
-                </div>
-                <div class="metric-item">
-                    <span>DISTANCIA AL REFUGIO:</span>
-                    <strong style="color:var(--risk-safe);">350m</strong>
-                </div>
-            </div>
-            <button type="button" class="btn-evac" onclick="verPantalla('map')">VER RUTA DE EVACUACIÓN</button>
+          <span>EARTHCAST QUITO</span>
+          <span class="connection-state" data-connection-state role="status" aria-live="polite"></span>
         </div>
+        <button type="button" class="btn-demo" onclick="simularCambioDelta()">↻ SIMULAR DELTA</button>
+      </div>
+
+      <div class="shield-box" id="ui-box">
+        <div style="font-size:0.85rem; color:var(--text-muted);">ESTADO DE TU ZONA</div>
+        <div class="shield-status" id="ui-status">CRÍTICO</div>
+        <p style="font-size:0.85rem; color:var(--text-muted);" id="ui-desc">SATURACIÓN HÍDRICA SOBRE FALLA ACTIVA</p>
+      </div>
+
+      <div>
+        <div class="metrics-panel">
+          <div class="metric-item">
+            <span>HUMEDAD DEL SUELO (NASA/METEORED):</span>
+            <strong id="ui-humedad" style="color:var(--risk-high);">92%</strong>
+          </div>
+          <div class="metric-item">
+            <span>ACTIVIDAD DE FALLAS (IG-EPN):</span>
+            <strong id="ui-sismos" style="color:var(--risk-med);">ENJAMBRE MICRO</strong>
+          </div>
+          <div class="metric-item">
+            <span>DISTANCIA AL REFUGIO:</span>
+            <strong style="color:var(--risk-safe);">350m</strong>
+          </div>
+        </div>
+        <button type="button" class="btn-evac" onclick="verPantalla('map')">VER RUTA DE EVACUACIÓN</button>
+      </div>
     </section>
 
-    <!-- PANTALLA 2: MAPA -->
     <section id="screen-map" class="screen">
-        <div class="map-banner">
-            <strong style="color:var(--route-cyan);">RUTA OFFLINE ACTIVA (350m)</strong><br>
-            <span>SIGUE LA LÍNEA BRILLANTE HASTA UN REFUGIO SEGURO</span>
-        </div>
-        <div id="map"></div>
+      <div class="map-banner">
+        <strong style="color:var(--route-cyan);">MAPA DE CALLES DE QUITO · ESRI</strong><br />
+        <span>Elige tu ubicación y un destino seguro indicado por las autoridades.</span>
+        <span class="connection-state" data-connection-state role="status" aria-live="polite"></span>
+      </div>
+      <div id="map-evac" class="leaflet-map" aria-label="Mapa de evacuación real"></div>
+      <div id="offline-map" class="offline-map" hidden aria-label="Esquema offline de puntos de encuentro">
+        <h3>Vista sin conexión · puntos de encuentro</h3>
+        <p id="offline-map-reason"></p>
+        <p>Los puntos de encuentro están confirmados; algunas coordenadas son aproximadas. Este esquema no muestra calles ni rutas.</p>
+        <svg id="offline-map-svg" viewBox="0 0 400 320" role="img" aria-label="Esquema de puntos referenciales del sur de Quito"></svg>
+        <ol id="offline-map-list" class="offline-map-list"></ol>
+        <p>Cartografía: © OpenStreetMap contributors.</p>
+      </div>
+      <details class="route-panel" open>
+        <summary>CONTROLES DE EVACUACIÓN</summary>
+        <button type="button" onclick="ubicarUsuario()">USAR MI UBICACIÓN</button>
+        <div id="nearest-point-status" class="nearest-point-status" aria-live="polite">Permite usar tu ubicación para mostrar el lugar cartografiado más cercano.</div>
+        <button id="use-nearest-point" type="button" onclick="usarPuntoMasCercano()" hidden>USAR ESTE PUNTO COMO DESTINO</button>
+        <label for="encounter-point-select">DESTINO · PUNTOS DE ENCUENTRO</label>
+        <select id="encounter-point-select" aria-label="Elige un punto de encuentro">
+          <option value="">Elige un punto de encuentro</option>
+        </select>
+        <button type="button" onclick="usarPuntoSeleccionado()">USAR COMO DESTINO</button>
+        <select id="official-point" aria-label="Puntos de encuentro del afiche compartido">
+          <option value="">Puntos de encuentro del afiche · Sur de Quito</option>
+          <option value="Parque Metropolitano del Sur, El Troje, Avenida Simon Bolivar, Quito, Ecuador">Parque Metropolitano del Sur · El Troje</option>
+          <option value="Plaza Quitumbe, Avenida Quitumbe y Condor Nan, Quito, Ecuador">Plaza Quitumbe · Quitumbe y Cóndor Ñan</option>
+          <option value="Parque UTAQ, Leonidas Dubles E5B, Quito, Ecuador">Parque UTAQ · Leónidas Dubles E5B</option>
+          <option value="Parque Nueva Aurora, Manuel Guamani y Principal, Quito, Ecuador">Parque Nueva Aurora · Guamaní y Principal</option>
+          <option value="Parque Ecologico Solanda, Jose Abascal y J Aleman, Quito, Ecuador">Parque Ecológico Solanda · José Abascal y J. Alemán</option>
+          <option value="Parque Las Cuadras, Avenida Rumichaca y Avenida Moran Valverde, Quito, Ecuador">Parque Las Cuadras · Rumichaca y Morán Valverde</option>
+          <option value="Parque Solanda S4, Manuel Monteros y Jose Ponton, Quito, Ecuador">Parque Solanda S4 · Manuel Monteros y José Pontón</option>
+          <option value="Liga Barrial Solanda, Jose Aleman y Ajavi, Quito, Ecuador">Liga Barrial Solanda · José Alemán y Ajaví</option>
+          <option value="Parque Solanda S2, Francisco Rueda y Simon Bolivar, Quito, Ecuador">Parque Solanda S2 · Francisco Rueda y Simón Bolívar</option>
+          <option value="Parque Cardenal de la Torre, Avenida Cardenal de la Torre entre Ajavi y Teniente Ortiz, Quito, Ecuador">Parque Cardenal de la Torre · entre Ajaví y Tnte. Ortiz</option>
+        </select>
+        <button type="button" onclick="ubicarPuntoOficial()">UBICAR PUNTO DEL AFICHE</button>
+        <button id="confirm-point" type="button" onclick="confirmarPuntoOficial()" hidden>CONFIRMAR PUNTO EN EL MAPA</button>
+        <button type="button" onclick="calcularRuta()">CALCULAR RUTA</button>
+        <p id="route-status">Pulsa USAR MI UBICACIÓN para fijar el origen, elige un punto de encuentro y pulsa CALCULAR RUTA. El trazado por calles es estimado, no una ruta oficial de evacuación.</p>
+        <ol id="route-steps"></ol>
+        <a id="google-nav" href="#" target="_blank" rel="noopener" hidden>ABRIR NAVEGACIÓN</a>
+        <p>Los destinos están confirmados como puntos de encuentro; algunas coordenadas son aproximadas y pueden no coincidir con el acceso exacto.</p>
+      </details>
     </section>
 
-    <!-- PANTALLA 3: FICHA EDUCATIVA -->
+    <section id="screen-cartografia" class="screen">
+      <div class="map-banner">
+        <strong style="color:var(--route-cyan);">CARTOGRAFÍA DE QUITO</strong><br />
+        <span>Activa una o varias capas GeoJSON para explorarlas sobre el mapa.</span>
+        <span class="connection-state" data-connection-state role="status" aria-live="polite"></span>
+      </div>
+      <div id="map-cartografia" class="leaflet-map" aria-label="Mapa de capas cartográficas de Quito"></div>
+      <details class="route-panel" open>
+        <summary>CAPAS CARTOGRÁFICAS</summary>
+        <label class="map-layer-toggle">
+          <input type="checkbox" data-map-layer="curvas">
+          Curvas NASA (alias curvas_NASA / curvas_nasa)
+        </label>
+        <label class="map-layer-toggle">
+          <input type="checkbox" data-map-layer="urbana">
+          Parroquias urbanas de Quito
+        </label>
+        <label class="map-layer-toggle">
+          <input type="checkbox" data-map-layer="rural">
+          Parroquias rurales de Quito
+        </label>
+        <label class="map-layer-toggle">
+          <input type="checkbox" data-map-layer="rutas">
+          Rutas de Quito
+        </label>
+        <p id="cartografia-status" aria-live="polite">Las capas se cargan solo cuando las activas.</p>
+      </details>
+    </section>
+
+    <section id="screen-sismos" class="screen">
+      <div class="map-banner" style="top: 12px;">
+        <strong style="color:#fbbf24;">SISMOS REGISTRADOS · USGS</strong><br />
+        <span>Eventos M2.5+ de los últimos 7 días · no incluye todos los microsismos locales.</span>
+      </div>
+      <div id="map-sismos" class="leaflet-map" aria-label="Mapa sísmico real"></div>
+    </section>
+
+    <section id="screen-level" class="screen">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h2 style="font-size:1.25rem;">Diagnóstico del nivel de riesgo</h2>
+        <span id="level-badge" class="level-badge" style="background: rgba(255, 23, 68, 0.15); color: #ff1744;">CRÍTICO</span>
+      </div>
+
+      <div class="level-shell">
+        <article class="level-card">
+          <h3>¿Qué está pasando?</h3>
+          <p id="level-detail">El suelo está muy saturado y la falla activa se está lubricando con agua. Cuando el agua alcanza la zona de roce entre bloques geológicos, la fricción cae y aparecen microtemblores.</p>
+        </article>
+
+        <article class="level-card">
+          <h3>Umbrales de nivel</h3>
+          <ul>
+            <li><strong>NORMAL:</strong> humedad por debajo de 50%. La zona está estable y la falla no presenta presión crítica.</li>
+            <li><strong>ESTABLE:</strong> 50% a 69%. Hay cierta humedad, pero no hay evidencia de presión acumulada.</li>
+            <li><strong>PRECAUCIÓN:</strong> 70% a 84%. La falla empieza a verse afectada por infiltración y es necesario monitorear.</li>
+            <li><strong>CRÍTICO:</strong> 85% o más. La saturación supera el umbral de riesgo y la evacuación es recomendable.</li>
+          </ul>
+        </article>
+
+        <article class="level-card">
+          <h3>Indicadores del sistema</h3>
+          <p id="level-indicators">Humedad del suelo 92%, enjambre microsísmico detectado, distancia a refugio 350 m y trayecto de evacuación activo.</p>
+        </article>
+      </div>
+    </section>
+
     <section id="screen-edu" class="screen">
-        <h2 style="margin-bottom:14px; font-size:1.3rem;">¿Cómo activa el agua una falla?</h2>
-        <div class="edu-card" style="text-align:center;">
-            <svg viewBox="0 0 300 130" width="100%" height="auto">
-                <rect x="10" y="55" width="280" height="65" rx="6" fill="#25252b"/>
-                <line x1="140" y1="55" x2="105" y2="120" stroke="#00e5ff" stroke-width="4"/>
-                <line x1="140" y1="55" x2="105" y2="120" stroke="#ff1744" stroke-width="1.5" stroke-dasharray="4,4"/>
-                <text x="20" y="35" fill="#00e5ff" font-size="11" font-weight="bold">1. LLUVIA (EL NIÑO) INFILTRADA</text>
-                <text x="155" y="90" fill="#ff1744" font-size="11" font-weight="bold">2. FALLA LUBRICADA</text>
-                <text x="155" y="105" fill="#a0a0a0" font-size="9">MENOR FRICCIÓN = MICROSISMOS</text>
-            </svg>
-        </div>
-        <div class="edu-card">
-            <h3>1. INFILTRACIÓN DE SEMANAS ATRÁS</h3>
-            <p>Las lluvias intensas saturan el suelo al 92% y el agua baja lentamente hasta las grietas profundas de la roca.</p>
-        </div>
-        <div class="edu-card">
-            <h3>2. LUBRICACIÓN DE LA FALLA</h3>
-            <p>Esa presión de agua reduce la fricción entre bloques de tierra, provocando enjambres microsísmicos detectados por el IG-EPN.</p>
-        </div>
+      <h2 style="margin-bottom:14px; font-size:1.3rem;">¿Cómo activa el agua una falla?</h2>
+      <div class="edu-card" style="text-align:center;">
+        <svg viewBox="0 0 300 130" width="100%" height="auto" aria-label="Esquema de activación de falla">
+          <rect x="10" y="55" width="280" height="65" rx="6" fill="#25252b" />
+          <line x1="140" y1="55" x2="105" y2="120" stroke="#00e5ff" stroke-width="4" />
+          <line x1="140" y1="55" x2="105" y2="120" stroke="#ff1744" stroke-width="1.5" stroke-dasharray="4,4" />
+          <text x="20" y="35" fill="#00e5ff" font-size="11" font-weight="bold">1. LLUVIA (EL NIÑO) INFILTRADA</text>
+          <text x="155" y="90" fill="#ff1744" font-size="11" font-weight="bold">2. FALLA LUBRICADA</text>
+          <text x="155" y="105" fill="#a0a0a0" font-size="9">MENOR FRICCIÓN = MICROSISMOS</text>
+        </svg>
+      </div>
+      <div class="edu-card">
+        <h3>1. INFILTRACIÓN DE SEMANAS ATRÁS</h3>
+        <p>Las lluvias intensas saturan el suelo al 92% y el agua baja lentamente hasta las grietas profundas de la roca.</p>
+      </div>
+      <div class="edu-card">
+        <h3>2. LUBRICACIÓN DE LA FALLA</h3>
+        <p>Esa presión de agua reduce la fricción entre bloques de tierra, provocando enjambres microsísmicos detectados por el IG-EPN.</p>
+      </div>
     </section>
 
-    <!-- BARRA DE NAVEGACIÓN -->
     <nav class="nav-bar">
-        <button type="button" id="btn-home" class="active" onclick="verPantalla('home')">ESCUDO</button>
-        <button type="button" id="btn-map" onclick="verPantalla('map')">MAPA</button>
-        <button type="button" id="btn-edu" onclick="verPantalla('edu')">¿POR QUÉ?</button>
+      <button type="button" id="btn-home" class="active" onclick="verPantalla('home')">ESCUDO</button>
+      <button type="button" id="btn-map" onclick="verPantalla('map')">MAPA</button>
+      <button type="button" id="btn-cartografia" onclick="verPantalla('cartografia')">CARTOGRAFÍA</button>
+      <button type="button" id="btn-sismos" onclick="verPantalla('sismos')">SISMOS</button>
+      <button type="button" id="btn-level" onclick="verPantalla('level')">NIVEL</button>
+      <button type="button" id="btn-edu" onclick="verPantalla('edu')">¿POR QUÉ?</button>
     </nav>
 
+    <script src="./vendor/leaflet/leaflet.js"></script>
     <script>
-        let mapaCargado = false;
-        let map = null;
-        let estadoSimulado = true;
+      let estadoSimulado = true;
+      let mapEvac = null;
+      let mapSismos = null;
+      let mapCartografia = null;
+      let evacOrigin = null;
+      let evacDestination = null;
+      let evacDestinationLabel = 'Destino elegido';
+      let evacCandidate = null;
+      let evacCandidateLabel = '';
+      let originMarker = null;
+      let destinationMarker = null;
+      let routeLayer = null;
+      let encounterPoints = [];
+      let pointMarkers = [];
+      let nearestPoint = null;
+      let nearestMarker = null;
+      const datosCartografia = {};
+      const solicitudesCartografia = {};
+      const capasCartografia = {};
+      const definicionesCartografia = {
+        curvas: {
+          name: 'Curvas NASA',
+          url: './curvas_NASA.geojson',
+          style: { color: '#f59e0b', weight: 1.4, opacity: 0.75 },
+          popup: [['Elevación (m)', 'ELEV']]
+        },
+        urbana: {
+          name: 'Parroquias urbanas',
+          url: './parroqurbana_quito.geojson',
+          style: { color: '#38bdf8', weight: 2, fillColor: '#0ea5e9', fillOpacity: 0.08 },
+          popup: [['Parroquia', 'dpa_despar'], ['Zona administrativa', 'AD_ZONAL']]
+        },
+        rural: {
+          name: 'Parroquias rurales',
+          url: './parroqurural_quito.geojson',
+          style: { color: '#86efac', weight: 1.5, fillColor: '#16a34a', fillOpacity: 0.08 },
+          popup: [['Parroquia', 'dpa_despar'], ['Zona administrativa', 'adm_zonal']]
+        },
+        rutas: {
+          name: 'Rutas de Quito',
+          url: './rutas_quito.geojson',
+          style: { color: '#ef4444', weight: 2.5, opacity: 0.85 },
+          popup: [['Vía', 'nam_via'], ['Zona administrativa', 'adm_zonal']]
+        }
+      };
 
-        // 1. NAVEGACIÓN ENTRE PANTALLAS
-        function verPantalla(nombre) {
-            document.querySelectorAll('.screen').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-bar button').forEach(b => b.classList.remove('active'));
+      function verPantalla(nombre) {
+        document.querySelectorAll('.screen').forEach((p) => p.classList.remove('active'));
+        document.querySelectorAll('.nav-bar button').forEach((b) => b.classList.remove('active'));
 
-            document.getElementById('screen-' + nombre).classList.add('active');
-            document.getElementById('btn-' + nombre).classList.add('active');
+        const target = document.getElementById('screen-' + nombre);
+        const btn = document.getElementById('btn-' + nombre);
 
-            if (nombre === 'map' && !mapaCargado) {
-                iniciarMapa();
-                mapaCargado = true;
-            } else if (nombre === 'map' && map) {
-                map.resize();
-            }
+        if (target) target.classList.add('active');
+        if (btn) btn.classList.add('active');
+
+        if (nombre === 'map' && !mapEvac) {
+          inicializarMapaEvacuacion();
+        } else if (nombre === 'map' && mapEvac) {
+          setTimeout(() => mapEvac.invalidateSize(), 80);
         }
 
-        // 2. INICIALIZACIÓN DEL MAPA
-        function iniciarMapa() {
-            const usuario = [-78.5025, -0.2145];
-            const refugio = [-78.4995, -0.2115];
+        if (nombre === 'sismos' && !mapSismos) {
+          inicializarMapaSismos();
+        } else if (nombre === 'sismos' && mapSismos) {
+          setTimeout(() => mapSismos.invalidateSize(), 80);
+        }
 
-            map = new maplibregl.Map({
-                container: "map",
-                style: "https://cartocdn.com",
-                center: [-78.5010, -0.2130],
-                zoom: 16
+        if (nombre === 'cartografia' && !mapCartografia) {
+          inicializarMapaCartografia();
+        } else if (nombre === 'cartografia' && mapCartografia) {
+          setTimeout(() => mapCartografia.invalidateSize(), 80);
+        }
+
+        if (nombre === 'map' || nombre === 'cartografia') {
+          actualizarEstadoConexion();
+        }
+
+        if (nombre === 'map') {
+          actualizarEsquemaOffline();
+        }
+      }
+
+      function inicializarMapaCartografia() {
+        try {
+          mapCartografia = L.map('map-cartografia').setView([-0.22, -78.5], 10);
+        } catch (error) {
+          console.error('No fue posible inicializar el mapa de cartografía:', error);
+          document.getElementById('cartografia-status').textContent = 'No se pudo iniciar el mapa.';
+          return;
+        }
+
+        const tiles = L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles &copy; Esri — Sources: Esri, TomTom, Garmin, FAO, NOAA, USGS, and the GIS User Community',
+          maxZoom: 19
+        }).addTo(mapCartografia);
+        tiles.on('tileerror', () => {
+          document.getElementById('cartografia-status').textContent = 'No se pudo cargar el mapa base; las capas GeoJSON aún pueden estar disponibles.';
+        });
+        L.control.scale({ metric: true, imperial: false }).addTo(mapCartografia);
+        window.setTimeout(() => mapCartografia.invalidateSize(), 80);
+      }
+
+      function obtenerDatosCartografia(key) {
+        if (datosCartografia[key]) return Promise.resolve(datosCartografia[key]);
+        if (!solicitudesCartografia[key]) {
+          const definition = definicionesCartografia[key];
+          solicitudesCartografia[key] = fetch(definition.url)
+            .then((response) => {
+              if (!response.ok) throw new Error(`No se pudo descargar ${definition.name}.`);
+              return response.json();
+            })
+            .then((data) => {
+              if (data.type !== 'FeatureCollection' || !Array.isArray(data.features) || !data.features.length) {
+                throw new Error(`El GeoJSON de ${definition.name} no contiene entidades válidas.`);
+              }
+              datosCartografia[key] = data;
+              return data;
+            })
+            .finally(() => {
+              delete solicitudesCartografia[key];
             });
+        }
+        return solicitudesCartografia[key];
+      }
 
-            map.on('load', () => {
-                map.addSource('ruta', {
-                    type: 'geojson',
-                    data: {
-                        type: 'Feature',
-                        geometry: {
-                            type: 'LineString',
-                            coordinates: [usuario, [-78.5012, -0.2128], refugio]
-                            }
-                        }
-                    });
-                    map.addLayer({
-                        id: 'ruta-linea',
-                        type: 'line',
-                        source: 'ruta',
-                        paint: { 'line-color': '#00e5ff', 'line-width': 5 }
-                        });
-                        const el = document.createElement('div');
-                        el.className = 'shelter-dot';
-                        new maplibregl.Marker({ element: el }).setLngLat(refugio).addTo(map);
-                        new maplibregl.Marker({ color: '#ff1744' }).setLngLat(usuario).addTo(map);
-                });
-                    }
-                    async function cargarDatosDesdeJava() {
-                try {
-                    const res = await fetch('delta.json');
-                    const datos = await res.json();
-                    if (datos.h && datos.h["170150"]) {
-                        aplicarValoresUI(datos.h["170150"], datos.s ? datos.s.length : 1);
-                        }
-                        } catch (e) {
-                            console.log("Usando datos locales por defecto (sin servidor activo).");
-                            }
-                }
-                function aplicarValoresUI(humedad, sismos) {
-                    const elHumedad = document.getElementById('ui-humedad');
-                    const elStatus = document.getElementById('ui-status');
-                    const elBox = document.getElementById('ui-box');
-                    const elSismos = document.getElementById('ui-sismos');
-                    elHumedad.textContent = humedad + "%";
-                    elSismos.textContent = sismos > 0
-    ? `ENJAMBRE (${sismos})`
-    : "CALMA SÍSMICA";
-                    if (humedad >= 85) {
-                        elStatus.textContent = "CRÍTICO";
-                        elStatus.style.color = "var(--risk-high)";
-                        elBox.style.borderColor = "var(--risk-high)";
-                        elHumedad.style.color = "var(--risk-high)";
-                        } else if (humedad >= 70) {
-                            elStatus.textContent = "PRECAUCIÓN";
-                            elStatus.style.color = "var(--risk-med)";
-                            elBox.style.borderColor = "var(--risk-med)";
-                            elHumedad.style.color = "var(--risk-med)";
-                            } else {
-                                elStatus.textContent = "ESTABLE";
-                                elStatus.style.color = "var(--risk-safe)";
-                                elBox.style.borderColor = "var(--risk-safe)";
-                                elHumedad.style.color = "var(--risk-safe)";
-                                }
-                }
-                function simularCambioDelta() {
-                    estadoSimulado = !estadoSimulado;
-                    if (estadoSimulado) {
-                        aplicarValoresUI(92, 2);
-                        } else {
-                            aplicarValoresUI(64, 0);
-                            }
-                }
-                cargarDatosDesdeJava();
+      function crearPopupCartografia(key, properties) {
+        const popup = document.createElement('div');
+        definicionesCartografia[key].popup.forEach(([label, property]) => {
+          const value = properties[property];
+          if (value === undefined || value === null || value === '') return;
+          const row = document.createElement('p');
+          row.textContent = `${label}: ${value}`;
+          popup.append(row);
+        });
+        return popup;
+      }
+
+      function ajustarVistaCartografia() {
+        let bounds = null;
+        Object.values(capasCartografia).forEach((layer) => {
+          const layerBounds = layer.getBounds();
+          if (!layerBounds.isValid()) return;
+          bounds = bounds ? bounds.extend(layerBounds) : layerBounds;
+        });
+        if (bounds) mapCartografia.fitBounds(bounds.pad(0.03), { maxZoom: 12 });
+      }
+
+      async function cambiarCapaCartografica(event) {
+        const checkbox = event.currentTarget;
+        const key = checkbox.dataset.mapLayer;
+        const status = document.getElementById('cartografia-status');
+        const definition = definicionesCartografia[key];
+
+        if (!mapCartografia) {
+          checkbox.checked = false;
+          status.textContent = 'No se pudo iniciar el mapa de cartografía.';
+          return;
+        }
+
+        if (!checkbox.checked) {
+          if (capasCartografia[key]) {
+            mapCartografia.removeLayer(capasCartografia[key]);
+            delete capasCartografia[key];
+            ajustarVistaCartografia();
+          }
+          status.textContent = `${definition.name} oculta.`;
+          return;
+        }
+
+        status.textContent = `Cargando ${definition.name}; puede tardar por el tamaño del GeoJSON…`;
+        try {
+          const data = await obtenerDatosCartografia(key);
+          if (!checkbox.checked || capasCartografia[key]) return;
+          const layer = L.geoJSON(data, {
+            renderer: L.canvas(),
+            style: definition.style,
+            onEachFeature: (feature, featureLayer) => {
+              featureLayer.bindPopup(crearPopupCartografia(key, feature.properties || {}));
+            }
+          }).addTo(mapCartografia);
+          capasCartografia[key] = layer;
+          ajustarVistaCartografia();
+          status.textContent = `${definition.name}: ${data.features.length} entidades cargadas.`;
+        } catch (error) {
+          console.error(`No fue posible activar ${definition.name}:`, error);
+          checkbox.checked = false;
+          status.textContent = error.message;
+        }
+      }
+
+      function inicializarMapaEvacuacion() {
+        try {
+          mapEvac = L.map('map-evac').setView([-0.29, -78.55], 13);
+        } catch (error) {
+          console.error('No fue posible inicializar el mapa:', error);
+          mostrarEsquemaOffline('No se pudo iniciar el mapa de calles.');
+          return;
+        }
+
+        let tilesLoaded = false;
+        let tileErrors = 0;
+        const tiles = L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles &copy; Esri — Sources: Esri, TomTom, Garmin, FAO, NOAA, USGS, and the GIS User Community',
+          maxZoom: 19
+        });
+        tiles.on('tileload', () => {
+          tilesLoaded = true;
+          document.getElementById('offline-map').hidden = true;
+        });
+        tiles.on('tileerror', () => {
+          tileErrors += 1;
+          if (!tilesLoaded && tileErrors >= 3) {
+            mostrarEsquemaOffline('No se pudieron cargar las teselas del mapa de calles.');
+            setRouteStatus('No se pudo cargar el mapa de calles. Revisa la conexión o vuelve a intentar.');
+          }
+        });
+        tiles.addTo(mapEvac);
+        window.setTimeout(() => {
+          if (!tilesLoaded) mostrarEsquemaOffline('El mapa de calles no respondió; se muestra un esquema local.');
+        }, 5000);
+
+        L.control.scale({ metric: true, imperial: false }).addTo(mapEvac);
+        mapEvac.on('click', (event) => {
+          seleccionarDestino(event.latlng, 'Destino elegido en el mapa');
+        });
+
+        agregarPuntosAlMapa();
+        setRouteStatus('Pulsa USAR MI UBICACIÓN para fijar el origen, toca un marcador verde para elegir destino y luego CALCULAR RUTA.');
+        window.setTimeout(() => mapEvac.invalidateSize(), 80);
+      }
+
+      function mostrarEsquemaOffline(reason) {
+        const fallback = document.getElementById('offline-map');
+        const reasonElement = document.getElementById('offline-map-reason');
+        if (!fallback || !reasonElement) return;
+        reasonElement.textContent = reason;
+        fallback.hidden = false;
+        actualizarEsquemaOffline();
+      }
+
+      function actualizarEsquemaOffline() {
+        const svg = document.getElementById('offline-map-svg');
+        const list = document.getElementById('offline-map-list');
+        if (!svg || !list) return;
+
+        const ns = 'http://www.w3.org/2000/svg';
+        const element = (name, attributes = {}) => {
+          const node = document.createElementNS(ns, name);
+          Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value));
+          return node;
+        };
+        svg.replaceChildren();
+        svg.append(element('rect', { x: 0, y: 0, width: 400, height: 320, fill: '#eef2e8' }));
+        const roads = [
+          'M -10 90 C 90 55 180 120 410 65',
+          'M -10 230 C 100 180 260 270 410 210',
+          'M 105 -10 C 80 80 155 180 120 330',
+          'M 285 -10 C 230 75 330 155 275 330'
+        ];
+        roads.forEach((path) => svg.append(element('path', {
+          d: path, fill: 'none', stroke: '#c4d0c4', 'stroke-width': 12, 'stroke-linecap': 'round'
+        })));
+
+        const bounds = { minLat: -0.36, maxLat: -0.25, minLng: -78.57, maxLng: -78.49 };
+        const project = (lat, lng) => ({
+          x: 20 + ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 360,
+          y: 20 + ((bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat)) * 280
+        });
+
+        encounterPoints.forEach((point, index) => {
+          const { x, y } = project(point.lat, point.lng);
+          const marker = element('circle', {
+            cx: x, cy: y, r: 8,
+            fill: point === nearestPoint ? '#dc2626' : '#16803c',
+            stroke: '#fff', 'stroke-width': 2
+          });
+          const title = element('title');
+          title.textContent = `${index + 1}. ${point.name} (aproximado)`;
+          marker.append(title);
+          svg.append(marker);
+          const number = element('text', {
+            x, y: y + 3, 'text-anchor': 'middle', fill: '#fff',
+            'font-size': 8, 'font-weight': 700, 'pointer-events': 'none'
+          });
+          number.textContent = String(index + 1);
+          svg.append(number);
+        });
+
+        if (evacOrigin) {
+          const { x, y } = project(evacOrigin.lat, evacOrigin.lng);
+          svg.append(element('circle', {
+            cx: x, cy: y, r: 7, fill: '#2563eb', stroke: '#fff', 'stroke-width': 2
+          }));
+        }
+
+        list.replaceChildren();
+        encounterPoints.forEach((point, index) => {
+          const item = document.createElement('li');
+          item.textContent = `${index + 1}. ${point.name}`;
+          list.append(item);
+        });
+      }
+
+      function agregarPuntosAlMapa() {
+        if (!mapEvac) return;
+        pointMarkers.forEach((marker) => mapEvac.removeLayer(marker));
+        pointMarkers = encounterPoints.map((point) => {
+          const marker = L.circleMarker([point.lat, point.lng], {
+            radius: 7,
+            color: '#fff',
+            weight: 2,
+            fillColor: '#16803c',
+            fillOpacity: 0.95
+          }).addTo(mapEvac);
+          marker.bindTooltip(point.name, { permanent: true, direction: 'top', offset: [0, -6] });
+          marker.on('click', () => seleccionarDestino(
+            L.latLng(point.lat, point.lng),
+            point.name
+          ));
+          return marker;
+        });
+        if (!evacOrigin && !evacDestination && encounterPoints.length) {
+          mapEvac.fitBounds(
+            encounterPoints.map((point) => [point.lat, point.lng]),
+            { padding: [36, 36], maxZoom: 14 }
+          );
+        }
+      }
+
+      async function cargarPuntosEncuentro() {
+        const response = await fetch('./datos/puntos-encuentro.geojson');
+        if (!response.ok) throw new Error('No se pudieron cargar los puntos referenciales.');
+        const data = await response.json();
+        if (data.type !== 'FeatureCollection' || !Array.isArray(data.features)) {
+          throw new Error('El archivo de puntos referenciales no tiene un formato GeoJSON válido.');
+        }
+
+        encounterPoints = data.features
+          .filter((feature) => feature.geometry?.type === 'Point'
+            && Array.isArray(feature.geometry.coordinates)
+            && Number.isFinite(feature.geometry.coordinates[0])
+            && Number.isFinite(feature.geometry.coordinates[1])
+            && typeof feature.properties?.name === 'string')
+          .map((feature) => ({
+            name: feature.properties.name,
+            lng: feature.geometry.coordinates[0],
+            lat: feature.geometry.coordinates[1]
+          }));
+
+        if (!encounterPoints.length) throw new Error('El archivo de puntos referenciales está vacío.');
+        const pointSelect = document.getElementById('encounter-point-select');
+        encounterPoints.forEach((point, index) => {
+          pointSelect.add(new Option(point.name, String(index)));
+        });
+        agregarPuntosAlMapa();
+        actualizarEsquemaOffline();
+      }
+
+      function setRouteStatus(message) {
+        const status = document.getElementById('route-status');
+        if (status) status.textContent = message;
+      }
+
+      function actualizarEstadoConexion() {
+        const online = navigator.onLine;
+        document.querySelectorAll('[data-connection-state]').forEach((status) => {
+          status.textContent = online
+            ? 'Con conexión · se intentará cargar calles y rutas; puntos de encuentro guardados.'
+            : 'Sin conexión · app y puntos de encuentro guardados disponibles; rutas externas no.';
+        });
+      }
+
+      function distanciaMetros(origen, destino) {
+        const rad = (degrees) => degrees * Math.PI / 180;
+        const lat1 = rad(origen.lat);
+        const lat2 = rad(destino.lat);
+        const deltaLat = rad(destino.lat - origen.lat);
+        const deltaLng = rad(destino.lng - origen.lng);
+        const a = Math.sin(deltaLat / 2) ** 2
+          + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+        return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      }
+
+      function actualizarPuntoMasCercano(origen) {
+        const result = document.getElementById('nearest-point-status');
+        const useButton = document.getElementById('use-nearest-point');
+        if (!encounterPoints.length) {
+          result.textContent = 'No hay puntos de encuentro guardados para calcular la cercanía.';
+          useButton.hidden = true;
+          return;
+        }
+
+        nearestPoint = encounterPoints
+          .map((point) => ({ point, distance: distanciaMetros(origen, point) }))
+          .sort((a, b) => a.distance - b.distance)[0].point;
+        const distance = distanciaMetros(origen, nearestPoint);
+        const distanceText = distance >= 1000
+          ? `${(distance / 1000).toFixed(1)} km en línea recta`
+          : `${Math.round(distance)} m en línea recta`;
+        result.textContent = `Punto de encuentro más cercano: ${nearestPoint.name} · ${distanceText} en línea recta.`;
+        useButton.hidden = false;
+
+        if (mapEvac) {
+          if (nearestMarker) mapEvac.removeLayer(nearestMarker);
+          nearestMarker = L.circleMarker([nearestPoint.lat, nearestPoint.lng], {
+            radius: 11,
+            color: '#fff',
+            weight: 3,
+            fillColor: '#dc2626',
+            fillOpacity: 1
+          }).addTo(mapEvac);
+          nearestMarker.on('click', () => seleccionarDestino(
+            L.latLng(nearestPoint.lat, nearestPoint.lng),
+            nearestPoint.name
+          ));
+          mapEvac.fitBounds([
+            [origen.lat, origen.lng],
+            [nearestPoint.lat, nearestPoint.lng]
+          ], {
+            paddingTopLeft: [24, 170],
+            paddingBottomRight: [24, 100],
+            maxZoom: 14
+          });
+        }
+        actualizarEsquemaOffline();
+      }
+
+      function ubicarUsuario() {
+        if (!navigator.geolocation) {
+          setRouteStatus('Este dispositivo no permite obtener la ubicación.');
+          return;
+        }
+
+        setRouteStatus('Obteniendo tu ubicación para ordenar los puntos cercanos…');
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            evacOrigin = L.latLng(position.coords.latitude, position.coords.longitude);
+            if (originMarker && mapEvac) mapEvac.removeLayer(originMarker);
+            if (mapEvac) {
+              originMarker = L.circleMarker(evacOrigin, {
+                radius: 9,
+                color: '#fff',
+                weight: 3,
+                fillColor: '#2563eb',
+                fillOpacity: 1
+              }).addTo(mapEvac).bindPopup('Tu ubicación actual');
+              mapEvac.setView(evacOrigin, 14);
+            }
+            actualizarPuntoMasCercano(evacOrigin);
+            actualizarEsquemaOffline();
+            setRouteStatus('Ubicación lista. La distancia al punto cercano es en línea recta; selecciona el punto y calcula la ruta con conexión.');
+          },
+          (error) => {
+            const message = error.code === error.PERMISSION_DENIED
+              ? 'No se concedió permiso de ubicación. Actívalo en el navegador para calcular la ruta.'
+              : 'No se pudo obtener tu ubicación. Comprueba el GPS y vuelve a intentarlo.';
+            setRouteStatus(message);
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+        );
+      }
+
+      function usarPuntoMasCercano() {
+        if (!nearestPoint) return;
+        seleccionarDestino(L.latLng(nearestPoint.lat, nearestPoint.lng), nearestPoint.name);
+      }
+
+      function usarPuntoSeleccionado() {
+        const select = document.getElementById('encounter-point-select');
+        if (select.value === '') {
+          setRouteStatus('Elige un punto de encuentro de la lista.');
+          return;
+        }
+
+        const point = encounterPoints[Number(select.value)];
+        if (!point) {
+          setRouteStatus('No se pudo encontrar el punto de encuentro seleccionado. Vuelve a elegirlo.');
+          return;
+        }
+        seleccionarDestino(L.latLng(point.lat, point.lng), point.name);
+        if (mapEvac) mapEvac.setView([point.lat, point.lng], Math.max(mapEvac.getZoom(), 15));
+      }
+
+      async function ubicarPuntoOficial() {
+        const select = document.getElementById('official-point');
+        const query = select.value;
+        if (!query) {
+          setRouteStatus('Selecciona uno de los puntos de encuentro del afiche.');
+          return;
+        }
+
+        setRouteStatus('Buscando el punto seleccionado en OpenStreetMap…');
+        try {
+          const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ec&q=${encodeURIComponent(query)}`;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error('No se pudo consultar el mapa de direcciones.');
+          const results = await response.json();
+          const place = results[0];
+          if (!place) throw new Error('No se encontró ese punto. Puedes acercar el mapa y marcarlo manualmente.');
+
+          const lat = Number(place.lat);
+          const lng = Number(place.lon);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -0.5 || lat > 0.1 || lng < -79 || lng > -78.2) {
+            throw new Error('El resultado no parece estar en Quito. Elige el punto directamente en el mapa.');
+          }
+
+          evacCandidate = L.latLng(lat, lng);
+          evacCandidateLabel = select.options[select.selectedIndex].text;
+          if (destinationMarker) mapEvac.removeLayer(destinationMarker);
+          const popup = document.createElement('span');
+          popup.textContent = `Resultado aproximado: ${place.display_name}. Confirma visualmente que coincida con el punto del afiche.`;
+          destinationMarker = L.marker(evacCandidate).addTo(mapEvac).bindPopup(popup).openPopup();
+          evacDestination = null;
+          evacDestinationLabel = '';
+          document.getElementById('confirm-point').hidden = false;
+          if (routeLayer) {
+            mapEvac.removeLayer(routeLayer);
+            routeLayer = null;
+          }
+          document.getElementById('route-steps').replaceChildren();
+          document.getElementById('google-nav').hidden = true;
+          mapEvac.setView([lat, lng], 17);
+          setRouteStatus(`Resultado aproximado de OpenStreetMap: ${place.display_name}. Revisa el marcador. Confírmalo solo si coincide con el afiche.`);
+        } catch (error) {
+          setRouteStatus(`${error.message} También puedes marcar el destino tocando el mapa.`);
+        }
+      }
+
+      function confirmarPuntoOficial() {
+        if (!evacCandidate) return;
+        seleccionarDestino(evacCandidate, evacCandidateLabel);
+      }
+
+      function seleccionarDestino(latlng, label) {
+        evacDestination = latlng;
+        evacDestinationLabel = label;
+        evacCandidate = null;
+        evacCandidateLabel = '';
+        document.getElementById('confirm-point').hidden = true;
+        const matchingPointIndex = encounterPoints.findIndex((point) =>
+          point.lat === latlng.lat && point.lng === latlng.lng);
+        document.getElementById('encounter-point-select').value =
+          matchingPointIndex === -1 ? '' : String(matchingPointIndex);
+        if (destinationMarker && mapEvac) mapEvac.removeLayer(destinationMarker);
+
+        const popup = document.createElement('span');
+        popup.textContent = `Destino: ${label}.`;
+        if (mapEvac) {
+          destinationMarker = L.marker(evacDestination).addTo(mapEvac)
+            .bindPopup(popup)
+            .openPopup();
+        }
+
+        if (routeLayer && mapEvac) {
+          mapEvac.removeLayer(routeLayer);
+          routeLayer = null;
+        }
+        document.getElementById('route-steps').replaceChildren();
+        document.getElementById('google-nav').hidden = true;
+        setRouteStatus(navigator.onLine
+          ? `Destino seleccionado: ${label}. Pulsa CALCULAR RUTA.`
+          : `Destino: ${label}. Sin conexión no se puede calcular una ruta por calles.`);
+      }
+
+      function instruccionEnEspanol(maneuver) {
+        const giro = {
+          left: 'a la izquierda',
+          right: 'a la derecha',
+          'slight left': 'ligeramente a la izquierda',
+          'slight right': 'ligeramente a la derecha',
+          'sharp left': 'cerrado a la izquierda',
+          'sharp right': 'cerrado a la derecha',
+          straight: 'de frente'
+        };
+        const calle = maneuver.name ? ` hacia ${maneuver.name}` : '';
+
+        if (maneuver.type === 'depart') return `Inicia el recorrido${calle}`;
+        if (maneuver.type === 'arrive') return 'Llegaste al destino';
+        if (maneuver.type === 'roundabout' || maneuver.type === 'rotary') return `En la rotonda, toma la salida${calle}`;
+        if (maneuver.type === 'turn' || maneuver.type === 'fork' || maneuver.type === 'end of road') {
+          return `Gira ${giro[maneuver.modifier] || ''}${calle}`.trim();
+        }
+        return `Continúa${calle}`;
+      }
+
+      function agregarConectorRuta(routeGroup, exactPoint, snappedCoordinates) {
+        if (!Array.isArray(snappedCoordinates)
+          || !Number.isFinite(snappedCoordinates[0])
+          || !Number.isFinite(snappedCoordinates[1])) return 0;
+
+        const snappedPoint = { lat: snappedCoordinates[1], lng: snappedCoordinates[0] };
+        const distance = distanciaMetros(exactPoint, snappedPoint);
+        if (distance > 0.5) {
+          L.polyline([
+            [exactPoint.lat, exactPoint.lng],
+            [snappedPoint.lat, snappedPoint.lng]
+          ], {
+            color: '#f59e0b',
+            weight: 4,
+            dashArray: '7 6',
+            lineCap: 'round'
+          })
+            .bindTooltip('Conector recto hasta el punto exacto; no es un sendero verificado.')
+            .addTo(routeGroup);
+        }
+        return distance;
+      }
+
+      async function calcularRuta() {
+        if (!evacOrigin) {
+          setRouteStatus('Primero pulsa USAR MI UBICACIÓN para fijar el origen de la ruta.');
+          return;
+        }
+        if (!evacDestination) {
+          setRouteStatus('Elige un punto de encuentro de la lista o toca su marcador en el mapa.');
+          return;
+        }
+        if (!navigator.onLine) {
+          setRouteStatus('Sin conexión: la ruta por calles necesita el servicio externo. Usa el esquema solo como referencia, no como navegación.');
+          return;
+        }
+
+        setRouteStatus('Calculando ruta peatonal por calles y caminos de OpenStreetMap…');
+        const stepsList = document.getElementById('route-steps');
+        stepsList.replaceChildren();
+
+        try {
+          const coordinates = `${evacOrigin.lng},${evacOrigin.lat};${evacDestination.lng},${evacDestination.lat}`;
+          const url = `https://routing.openstreetmap.de/routed-foot/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=true`;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error('El servicio de rutas no respondió.');
+
+          const data = await response.json();
+          if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
+            throw new Error('No se encontró una ruta peatonal entre esos puntos.');
+          }
+
+          const route = data.routes[0];
+          const routeCoordinates = route.geometry?.coordinates;
+          if (!Array.isArray(routeCoordinates) || routeCoordinates.length < 2) {
+            throw new Error('La ruta recibida no contiene un trazado válido.');
+          }
+          if (routeLayer) mapEvac.removeLayer(routeLayer);
+          routeLayer = L.featureGroup().addTo(mapEvac);
+          L.geoJSON(route.geometry, {
+            style: { color: '#fff', weight: 9, opacity: 0.85 }
+          }).addTo(routeLayer);
+          L.geoJSON(route.geometry, {
+            style: { color: '#087df1', weight: 6, opacity: 1 }
+          }).addTo(routeLayer);
+          const snappedOrigin = data.waypoints?.[0]?.location || routeCoordinates[0];
+          const snappedDestination = data.waypoints?.[1]?.location
+            || routeCoordinates[routeCoordinates.length - 1];
+          const originConnectorMeters = agregarConectorRuta(routeLayer, evacOrigin, snappedOrigin);
+          const destinationConnectorMeters = agregarConectorRuta(routeLayer, evacDestination, snappedDestination);
+          mapEvac.fitBounds(routeLayer.getBounds(), { paddingTopLeft: [24, 170], paddingBottomRight: [24, 100] });
+
+          const leg = route.legs[0];
+          const km = (route.distance / 1000).toFixed(2);
+          const minutes = Math.max(1, Math.round(route.duration / 60));
+          const connectorMessage = destinationConnectorMeters > 0.5
+            ? ` El tramo punteado llega al punto exacto (${Math.round(destinationConnectorMeters)} m en línea recta); no representa un sendero verificado.`
+            : ' La ruta por calles llega al punto marcado.';
+          setRouteStatus(`Ruta peatonal estimada a ${evacDestinationLabel}: ${km} km por calles · ${minutes} min. Datos de OpenStreetMap; verifica que el trayecto sea transitable.${connectorMessage}`);
+
+          if (originConnectorMeters > 0.5) {
+            const item = document.createElement('li');
+            item.textContent = `Desde tu ubicación hasta la red peatonal: ${Math.round(originConnectorMeters)} m en línea recta.`;
+            stepsList.append(item);
+          }
+
+          leg.steps.forEach((step) => {
+            const item = document.createElement('li');
+            const distance = step.distance >= 1000
+              ? `${(step.distance / 1000).toFixed(1)} km`
+              : `${Math.round(step.distance)} m`;
+            item.textContent = `${instruccionEnEspanol(step.maneuver)} (${distance})`;
+            stepsList.append(item);
+          });
+
+          if (destinationConnectorMeters > 0.5) {
+            const item = document.createElement('li');
+            item.textContent = `Desde la calle hasta el punto exacto: ${Math.round(destinationConnectorMeters)} m en línea recta; confirma que el acceso sea transitable.`;
+            stepsList.append(item);
+          }
+
+          const navLink = document.getElementById('google-nav');
+          navLink.href = `https://www.google.com/maps/dir/?api=1&origin=${evacOrigin.lat},${evacOrigin.lng}&destination=${evacDestination.lat},${evacDestination.lng}&travelmode=walking`;
+          navLink.hidden = false;
+        } catch (error) {
+          setRouteStatus(`${error.message} Comprueba tu conexión e inténtalo otra vez.`);
+        }
+      }
+
+      async function inicializarMapaSismos() {
+        mapSismos = L.map('map-sismos').setView([-0.18, -78.48], 10);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+          maxZoom: 18
+        }).addTo(mapSismos);
+
+        try {
+          const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojson');
+          if (!response.ok) throw new Error('USGS no disponible');
+          const data = await response.json();
+
+          const features = data.features.filter((feature) => {
+            const [lng, lat] = feature.geometry.coordinates;
+            return lat > -1.2 && lat < 0.2 && lng > -79.5 && lng < -78.2;
+          }).slice(0, 8);
+
+          features.forEach((feature) => {
+            const [lng, lat, depth] = feature.geometry.coordinates;
+            const mag = Number(feature.properties.mag || 1.5);
+            const circle = L.circleMarker([lat, lng], {
+              radius: Math.max(6, mag * 3),
+              color: mag >= 2.8 ? '#ef4444' : '#f59e0b',
+              fillColor: mag >= 2.8 ? '#ef4444' : '#f59e0b',
+              fillOpacity: 0.8
+            }).addTo(mapSismos);
+
+            circle.bindPopup(`Magnitud ${mag.toFixed(1)}<br>Profundidad: ${depth} km`);
+          });
+
+          if (!features.length) {
+            L.popup()
+              .setLatLng([-0.18, -78.48])
+              .setContent('USGS no reporta eventos M2.5+ en esta zona durante los últimos 7 días. Esto no descarta microsismos.')
+              .openOn(mapSismos);
+          }
+        } catch (error) {
+          console.error('No fue posible cargar el feed sísmico USGS:', error);
+          L.popup()
+            .setLatLng([-0.18, -78.48])
+            .setContent('No se pudo consultar el feed sísmico USGS. El mapa no muestra datos de ejemplo.')
+            .openOn(mapSismos);
+        }
+      }
+
+      function actualizarDescripcionNivel(humedad, sismos) {
+        const detalle = document.getElementById('level-detail');
+        const indicadores = document.getElementById('level-indicators');
+        const badge = document.getElementById('level-badge');
+
+        if (!detalle || !indicadores || !badge) return;
+
+        if (humedad >= 85) {
+          badge.textContent = 'CRÍTICO';
+          badge.style.background = 'rgba(255, 23, 68, 0.15)';
+          badge.style.color = '#ff1744';
+          detalle.textContent = 'El suelo está muy saturado y la falla activa se está lubricando con agua. La presión de poros aumenta y la fricción entre bloques geológicos cae, facilitando el deslizamiento y los microsismos.';
+        } else if (humedad >= 70) {
+          badge.textContent = 'PRECAUCIÓN';
+          badge.style.background = 'rgba(255, 145, 0, 0.15)';
+          badge.style.color = '#ff9100';
+          detalle.textContent = 'La infiltración de agua sigue creciendo y la falla se vuelve más sensible. Aunque aún no es extremo, la tendencia sugiere un aumento de la actividad sísmica cercana.';
+        } else if (humedad >= 50) {
+          badge.textContent = 'ESTABLE';
+          badge.style.background = 'rgba(0, 230, 118, 0.15)';
+          badge.style.color = '#00e676';
+          detalle.textContent = 'La zona se encuentra dentro de un rango de humedad moderado. El sistema no presenta señales críticas, aunque se recomienda seguir monitoring por cambios de lluvia o microtemblores.';
+        } else {
+          badge.textContent = 'NORMAL';
+          badge.style.background = 'rgba(59, 130, 246, 0.15)';
+          badge.style.color = '#60a5fa';
+          detalle.textContent = 'La humedad está por debajo del umbral de riesgo y la falla tiene poca presión de agua. La actividad sísmica no presenta indicios de desestabilización.';
+        }
+
+        indicadores.textContent = `Humedad del suelo ${humedad}%, ${sismos > 0 ? 'enjambre microsísmico detectado' : 'sin enjambre activo'}, distancia al refugio 350 m y ruta de evacuación activa.`;
+      }
+
+      function aplicarValoresUI(humedad, sismos) {
+        const elHumedad = document.getElementById('ui-humedad');
+        const elStatus = document.getElementById('ui-status');
+        const elBox = document.getElementById('ui-box');
+        const elSismos = document.getElementById('ui-sismos');
+        const elDesc = document.getElementById('ui-desc');
+
+        if (!elHumedad || !elStatus || !elBox || !elSismos) return;
+
+        elHumedad.textContent = humedad + "%";
+        elSismos.textContent = sismos > 0 ? `ENJAMBRE (${sismos})` : 'CALMA SÍSMICA';
+
+        if (humedad >= 85) {
+          elStatus.textContent = 'CRÍTICO';
+          elStatus.style.color = 'var(--risk-high)';
+          elBox.style.borderColor = 'var(--risk-high)';
+          elHumedad.style.color = 'var(--risk-high)';
+          if (elDesc) elDesc.textContent = 'SATURACIÓN HÍDRICA SOBRE FALLA ACTIVA';
+        } else if (humedad >= 70) {
+          elStatus.textContent = 'PRECAUCIÓN';
+          elStatus.style.color = 'var(--risk-med)';
+          elBox.style.borderColor = 'var(--risk-med)';
+          elHumedad.style.color = 'var(--risk-med)';
+          if (elDesc) elDesc.textContent = 'INFILTRACIÓN CRECIENTE EN LA FALLA';
+        } else if (humedad >= 50) {
+          elStatus.textContent = 'ESTABLE';
+          elStatus.style.color = 'var(--risk-safe)';
+          elBox.style.borderColor = 'var(--risk-safe)';
+          elHumedad.style.color = 'var(--risk-safe)';
+          if (elDesc) elDesc.textContent = 'HUMEDAD MODERADA SIN PRESIÓN CRÍTICA';
+        } else {
+          elStatus.textContent = 'NORMAL';
+          elStatus.style.color = '#60a5fa';
+          elBox.style.borderColor = '#60a5fa';
+          elHumedad.style.color = '#60a5fa';
+          if (elDesc) elDesc.textContent = 'CONDICIONES NORMALES DE SEQUÍA Y ESTABILIDAD';
+        }
+
+        actualizarDescripcionNivel(humedad, sismos);
+      }
+
+      function simularCambioDelta() {
+        estadoSimulado = !estadoSimulado;
+        aplicarValoresUI(estadoSimulado ? 92 : 64, estadoSimulado ? 2 : 0);
+      }
+
+      async function cargarDatosDesdeJava() {
+        try {
+          const response = await fetch('delta.json');
+          if (!response.ok) throw new Error('delta.json no disponible');
+          const datos = await response.json();
+
+          if (datos.h && datos.h['170150']) {
+            const humedad = Number(datos.h['170150']);
+            const sismos = Array.isArray(datos.s) ? datos.s.length : 1;
+            aplicarValoresUI(humedad, sismos);
+          }
+        } catch (error) {
+          console.log('Usando datos locales por defecto (sin servidor activo).');
+          aplicarValoresUI(92, 2);
+        }
+      }
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./service-worker.js').catch((error) => {
+          console.error('No fue posible registrar el service worker:', error);
+        });
+      }
+
+      window.addEventListener('online', () => {
+        actualizarEstadoConexion();
+        if (mapEvac) {
+          document.getElementById('offline-map').hidden = true;
+          mapEvac.invalidateSize();
+        }
+      });
+      window.addEventListener('offline', actualizarEstadoConexion);
+      actualizarEstadoConexion();
+      document.querySelectorAll('[data-map-layer]').forEach((checkbox) => {
+        checkbox.addEventListener('change', cambiarCapaCartografica);
+      });
+      cargarPuntosEncuentro().catch((error) => {
+        console.error('No fue posible cargar los puntos referenciales:', error);
+        document.getElementById('nearest-point-status').textContent = error.message;
+      });
+      cargarDatosDesdeJava();
+      const initialScreen = new URLSearchParams(window.location.search).get('screen');
+      if (initialScreen === 'map' || initialScreen === 'cartografia') {
+        verPantalla(initialScreen);
+      }
+    </script>
+  </body>
+</html>
